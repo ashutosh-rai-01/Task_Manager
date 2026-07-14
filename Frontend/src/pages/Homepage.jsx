@@ -81,7 +81,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pt-5 relative bg-[#c6edf7]">
+    <div className="pt-5 relative bg-sky-200">
       <h1 className="text-2xl font-bold mb-5">Add Task</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-5">
