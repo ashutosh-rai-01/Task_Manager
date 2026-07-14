@@ -10,11 +10,22 @@ const TaskSchema = new Schema({
     description:{
         type:String,
         required: true,
-    },status:{
+    },
+    status:{
         type:String,
         required:true,
         default:'Pending',
         enum:['Pending' , 'Running','Completed','Failed']
+    },
+    date:{
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    user:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     }
 },{timestamps:true})
 

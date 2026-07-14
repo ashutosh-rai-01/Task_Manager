@@ -1,15 +1,22 @@
 import React, { useState } from "react";
 import { z } from "zod";
 import { getZoderror } from "../helper/getZoderror";
+import { useAuth } from "../context/AuthContext";
 
 const HomePage = () => {
-  const [formdata, setformdata] = useState({ title: "", description: "" });
+  const { token, logout } = useAuth();
+  const [formdata, setformdata] = useState({ 
+    title: "", 
+    description: "", 
+    date: new Date().toISOString().split('T')[0] 
+  });
   const [err, seterr] = useState({});
   const [toast, setToast] = useState(null);
 
   const taskschema = z.object({
     title: z.string().min(3, { message: "title must be atleast 3 chratcers long" }),
-    description: z.string().min(3, { message: "Description must be atleast 3 characters long " }).max(500, { message: "length exceeded" })
+    description: z.string().min(3, { message: "Description must be atleast 3 characters long " }).max(500, { message: "length exceeded" }),
+    date: z.string().min(1, { message: "Date is required" })
   });
 
   const showToast = (message, type = "success") => {
@@ -25,17 +32,29 @@ const HomePage = () => {
     e.preventDefault();
     try {
       const validatedata = taskschema.parse(formdata);
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/task/CreateTask`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/task/CreateTask`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(validatedata)
       });
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
 
       const responseData = await response.json();
 
       if (response.ok && responseData.success) {
-        showToast("✨ Task created successfully!");
-        setformdata({ title: "", description: "" });
+        showToast(" Task created successfully!");
+        setformdata({ 
+          title: "", 
+          description: "", 
+          date: new Date().toISOString().split('T')[0] 
+        });
         seterr({});
       } else {
         showToast(responseData.message || "Failed to create task", "error");
@@ -93,6 +112,19 @@ const HomePage = () => {
           ></textarea>
           {err?.description && <p className="text-red-500 text-sm mt-1">{err.description + "*"}</p>}
         </div>
+        <div className="mb-5">
+          <label className="block mb-2 text-sm font-medium text-gray-900 ">
+            Date
+          </label>
+          <input
+            name="date"
+            type="date"
+            onChange={handleInput}
+            value={formdata?.date || ''}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-colors cursor-pointer"
+          />
+          {err?.date && <p className="text-red-500 text-sm mt-1">{err.date + "*"}</p>}
+        </div>
 
         <button
           type="submit"
@@ -102,7 +134,7 @@ const HomePage = () => {
         </button>
       </form>
 
-      {/* Aesthetic Toast Notification */}
+  
       {toast && (
         <div
           className={`fixed top-5 right-5 z-50 flex items-center p-4 text-sm rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${
